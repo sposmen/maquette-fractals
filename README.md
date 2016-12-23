@@ -1,7 +1,4 @@
-This project was bootstrapped with [Create React App](https://github.com/facebookincubator/create-react-app).
 
-# React Fractals
+# Maquette Fractals
 
-An experiment in fractalization and component recursion.
-
-![](/react-tree.gif)
+An experiment in fractalization and component recursion based on [React-fractals](https://github.com/Swizec/react-fractals).

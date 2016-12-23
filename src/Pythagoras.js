@@ -1,45 +1,46 @@
+import * as maquette from 'maquette';
+const h = maquette.h;
+import {interpolateViridis} from 'd3-scale';
 
-import React from 'react';
-import { interpolateViridis } from 'd3-scale';
-
-Math.deg = function(radians) {
-  return radians * (180 / Math.PI);
+Math.deg = function (radians) {
+    return radians * (180 / Math.PI);
 };
 
 const memoizedCalc = function () {
     const memo = {};
 
-    const key = ({ w, heightFactor, lean }) => [w,heightFactor, lean].join('-');
+    const key = ({w, heightFactor, lean}) => [w, heightFactor, lean].join('-');
 
     return (args) => {
         const memoKey = key(args);
 
         if (memo[memoKey]) {
             return memo[memoKey];
-        }else{
-            const { w, heightFactor, lean } = args;
+        } else {
+            const {w, heightFactor, lean} = args;
 
-            const trigH = heightFactor*w;
+            const trigH = heightFactor * w;
 
             const result = {
-                nextRight: Math.sqrt(trigH**2 + (w * (.5+lean))**2),
-                nextLeft: Math.sqrt(trigH**2 + (w * (.5-lean))**2),
-                A: Math.deg(Math.atan(trigH / ((.5-lean) * w))),
-                B: Math.deg(Math.atan(trigH / ((.5+lean) * w)))
+                nextRight: Math.sqrt(trigH ** 2 + (w * (.5 + lean)) ** 2),
+                nextLeft: Math.sqrt(trigH ** 2 + (w * (.5 - lean)) ** 2),
+                A: Math.deg(Math.atan(trigH / ((.5 - lean) * w))),
+                B: Math.deg(Math.atan(trigH / ((.5 + lean) * w)))
             };
 
             memo[memoKey] = result;
             return result;
         }
-    }
+    };
 }();
 
-const Pythagoras = ({ w,x, y, heightFactor, lean, left, right, lvl, maxlvl }) => {
+const Pythagoras = ({w, x, y, heightFactor, lean, left, right, lvl, maxlvl}) => {
+
     if (lvl >= maxlvl || w < 1) {
-        return null;
+        return [];
     }
 
-    const { nextRight, nextLeft, A, B } = memoizedCalc({
+    const {nextRight, nextLeft, A, B} = memoizedCalc({
         w: w,
         heightFactor: heightFactor,
         lean: lean
@@ -49,29 +50,35 @@ const Pythagoras = ({ w,x, y, heightFactor, lean, left, right, lvl, maxlvl }) =>
 
     if (left) {
         rotate = `rotate(${-A} 0 ${w})`;
-    }else if (right) {
+    } else if (right) {
         rotate = `rotate(${B} ${w} ${w})`;
     }
 
     return (
         <g transform={`translate(${x} ${y}) ${rotate}`}>
-            <rect width={w} height={w}
-                  x={0} y={0}
-                  style={{fill: interpolateViridis(lvl/maxlvl)}} />
+            <rect width={w} height={w} x={0} y={0} style={{fill: interpolateViridis(lvl / maxlvl)}}/>
 
-            <Pythagoras w={nextLeft}
-                        x={0} y={-nextLeft}
-                        lvl={lvl+1} maxlvl={maxlvl}
-                        heightFactor={heightFactor}
-                        lean={lean}
-                        left />
+            {Pythagoras({
+                w: nextLeft,
+                x: 0,
+                y: -nextLeft,
+                lvl: lvl + 1,
+                maxlvl: maxlvl,
+                heightFactor: heightFactor,
+                lean: lean,
+                left: true
+            })}
 
-            <Pythagoras w={nextRight}
-                        x={w-nextRight} y={-nextRight}
-                        lvl={lvl+1} maxlvl={maxlvl}
-                        heightFactor={heightFactor}
-                        lean={lean}
-                        right />
+            {Pythagoras({
+                w: nextRight,
+                x: w - nextRight,
+                y: -nextRight,
+                lvl: lvl + 1,
+                maxlvl: maxlvl,
+                heightFactor: heightFactor,
+                lean: lean,
+                right: true
+            })}
 
         </g>
     );

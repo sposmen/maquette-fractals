@@ -1,26 +1,12 @@
-import React, { Component } from 'react';
-import logo from './logo.svg';
+import * as maquette from 'maquette';
+const h = maquette.h;
 import './App.css';
-import { select as d3select, mouse as d3mouse } from 'd3-selection';
-import { scaleLinear } from 'd3-scale';
+import {select as d3select, mouse as d3mouse} from 'd3-selection';
+import {scaleLinear} from 'd3-scale';
 
-import Pythagoras from './Pythagoras';
+import Pythagoras from './Pythagoras.js';
 
-
-// borrowed from Vue fork https://github.com/yyx990803/vue-fractal/blob/master/src/App.vue
-function throttleWithRAF (fn) {
-  let running = false
-  return function () {
-    if (running) return
-    running = true
-    window.requestAnimationFrame(() => {
-      fn.apply(this, arguments)
-      running = false
-    })
-  }
-}
-
-class App extends Component {
+class App {
     svg = {
         width: 1280,
         height: 600
@@ -34,64 +20,72 @@ class App extends Component {
     running = false;
     realMax = 11;
 
-    componentDidMount() {
-        d3select(this.refs.svg).on("mousemove", this.onMouseMove.bind(this));
+    projector = maquette.createProjector({});
+
+
+    run() {
+        this.projector.append(document.body, this.renderMaquette.bind(this));
+
+        d3select("#fractals-svg").on("mousemove", this.onMouseMove.bind(this));
 
         this.next();
+
     }
 
     next() {
-        const { currentMax } = this.state;
+        const {currentMax} = this.state;
 
         if (currentMax < this.realMax) {
-            this.setState({currentMax: currentMax + 1});
+            this.state.currentMax++;
             setTimeout(this.next.bind(this), 500);
         }
     }
 
-    // Throttling approach borrowed from Vue fork
-    // https://github.com/yyx990803/vue-fractal/blob/master/src/App.vue
-    // rAF makes it slower than just throttling on React update
     onMouseMove(event) {
         if (this.running) return;
         this.running = true;
 
-        const [x, y] = d3mouse(this.refs.svg),
+        const [x, y] = d3mouse("#fractals-svg"),
 
-              scaleFactor = scaleLinear().domain([this.svg.height, 0])
-                                         .range([0, .8]),
+            scaleFactor = scaleLinear().domain([this.svg.height, 0])
+                .range([0, .8]),
 
-              scaleLean = scaleLinear().domain([0, this.svg.width/2, this.svg.width])
-                                       .range([.5, 0, -.5]);
+            scaleLean = scaleLinear().domain([0, this.svg.width / 2, this.svg.width])
+                .range([.5, 0, -.5]);
 
-        this.setState({
-            heightFactor: scaleFactor(y),
-            lean: scaleLean(x)
-        });
+        this.state.heightFactor = scaleFactor(y);
+        this.state.lean = scaleLean(x);
         this.running = false;
     }
 
-    render() {
+    renderMaquette() {
         return (
-            <div className="App">
-                <div className="App-header">
-                    <img src={logo} className="App-logo" alt="logo" />
+            <div class="App">
+                <div class="App-header">
                     <h2>This is a dancing Pythagoras tree</h2>
                 </div>
-                <p className="App-intro">
-                    <svg width={this.svg.width} height={this.svg.height} ref="svg"
-                         style={{border: "1px solid lightgray"}}>
+                <p class="App-intro">
+                    {
+                        h('svg#fractals-svg', {
 
-                        <Pythagoras w={this.state.baseW}
-                                    h={this.state.baseW}
-                                    heightFactor={this.state.heightFactor}
-                                    lean={this.state.lean}
-                                    x={this.svg.width/2-40}
-                                    y={this.svg.height-this.state.baseW}
-                                    lvl={0}
-                                    maxlvl={this.state.currentMax}/>
+                            style: {
+                                border: "1px solid lightgray", width: this.svg.width,
+                                height: this.svg.height,
+                            }
+                        }, [
+                            Pythagoras({
+                                w: this.state.baseW,
+                                x: this.svg.width / 2 - 40,
+                                y: this.svg.height - this.state.baseW,
+                                heightFactor: this.state.heightFactor,
+                                lean: this.state.lean,
+                                lvl: 0,
+                                maxlvl: this.state.currentMax,
+                                h: this.state.baseW
+                            })
+                        ])
+                    }
 
-                    </svg>
                 </p>
             </div>
         );
